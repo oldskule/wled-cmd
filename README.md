@@ -1,7 +1,8 @@
 # wled-cmd
 Simple command line interface for WLED devices.
--Updated to use JSON API.
--Fix errors thrown when bash not >= 4.0
+
+- Updated to use JSON API.
+- Fixed errors thrown when bash not >= 4.0
 
 # requirements
 There are only 2 tools called by this script:
