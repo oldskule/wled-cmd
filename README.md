@@ -4,6 +4,7 @@ Simple command line interface for WLED devices.
 - Forked from mplinuxgeek/wled-cmd, props to GPT
 - Updated to use JSON API.
 - Fixed errors thrown when bash not >= 4.0
+- Added segment support
 
 # requirements
 There are only 2 tools called by this script:
