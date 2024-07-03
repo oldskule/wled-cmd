@@ -24,4 +24,6 @@ xmllint
 
 ./wled-cmd 192.168.1.147 off [comma_separated_list_of_segment_ids]
 ./wled-cmd 192.168.1.147 on [comma_separated_list_of_segment_ids]
+
+./wled-cmd 192.168.1.147 set_effect 10 1,2,3,4,5
 ```
