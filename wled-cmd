@@ -1,6 +1,6 @@
 #!/bin/bash
 usage() {
-  echo "Usage: $0 ipaddress {on|off|get_brightness|set_brightness|set_color|cycle|set_effect|status}"
+  echo "Usage: $0 ipaddress {on|off|get_brightness|set_brightness|set_color|cycle|set_effect|status} [segment_ids]"
 }
 
 # Validate IP address
@@ -25,14 +25,34 @@ http_code() {
 
 # Turn WLED on
 on() {
-  JSON_PAYLOAD='{"on": true}'
+  local segment_ids=$1
+  if [[ $segment_ids ]]; then
+    IFS=',' read -ra ids <<< "$segment_ids"
+    JSON_PAYLOAD='{"seg":['
+    for id in "${ids[@]}"; do
+      JSON_PAYLOAD+="{\"id\":$id,\"on\":true},"
+    done
+    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+  else
+    JSON_PAYLOAD='{"on": true}'
+  fi
   return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
   http_code $return
 }
 
 # Turn WLED off
 off() {
-  JSON_PAYLOAD='{"on": false}'
+  local segment_ids=$1
+  if [[ $segment_ids ]]; then
+    IFS=',' read -ra ids <<< "$segment_ids"
+    JSON_PAYLOAD='{"seg":['
+    for id in "${ids[@]}"; do
+      JSON_PAYLOAD+="{\"id\":$id,\"on\":false},"
+    done
+    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+  else
+    JSON_PAYLOAD='{"on": false}'
+  fi
   return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
   http_code $return
 }
@@ -45,11 +65,21 @@ get_brightness() {
 # Set brightness
 set_brightness() {
   local brightness=$1
+  local segment_ids=$2
   if [[ ! "$brightness" ]]; then
     brightness_help
     exit 1
   fi
-  JSON_PAYLOAD="{\"bri\":$brightness}"
+  if [[ $segment_ids ]]; then
+    IFS=',' read -ra ids <<< "$segment_ids"
+    JSON_PAYLOAD='{"seg":['
+    for id in "${ids[@]}"; do
+      JSON_PAYLOAD+="{\"id\":$id,\"bri\":$brightness},"
+    done
+    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+  else
+    JSON_PAYLOAD="{\"bri\":$brightness}"
+  fi
   return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
   http_code $return
 }
@@ -57,6 +87,7 @@ set_brightness() {
 # Set color
 set_color() {
   local color=$1
+  local segment_ids=$2
   if [[ ! "$color" ]]; then
     color_help
     exit 1
@@ -65,7 +96,16 @@ set_color() {
   r=$(printf '%d' "0x${color:0:2}")
   g=$(printf '%d' "0x${color:2:2}")
   b=$(printf '%d' "0x${color:4:2}")
-  JSON_PAYLOAD="{\"seg\":{\"col\":[[$r,$g,$b]]}}"
+  if [[ $segment_ids ]]; then
+    IFS=',' read -ra ids <<< "$segment_ids"
+    JSON_PAYLOAD='{"seg":['
+    for id in "${ids[@]}"; do
+      JSON_PAYLOAD+="{\"id\":$id,\"col\":[[$r,$g,$b]]},"
+    done
+    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+  else
+    JSON_PAYLOAD="{\"seg\":[{\"col\":[[$r,$g,$b]]}]}"
+  fi
   return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
   http_code $return
 }
@@ -78,15 +118,25 @@ cycle() {
 # Set effect
 set_effect() {
   local effect=$1
+  local segment_ids=$2
   if [[ ! "$effect" ]]; then
     fx_help
     exit 1
   fi
-  JSON_PAYLOAD="{\"seg\":{\"fx\":$effect}}"
+  if [[ $segment_ids ]]; then
+    IFS=',' read -ra ids <<< "$segment_ids"
+    JSON_PAYLOAD='{"seg":['
+    for id in "${ids[@]}"; do
+      JSON_PAYLOAD+="{\"id\":$id,\"fx\":$effect},"
+    done
+    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+  else
+    JSON_PAYLOAD="{\"seg\":[{\"fx\":$effect}]}"
+  fi
   return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
   http_code $return
 }
-  
+
 # Display current status
 status() {
   curl -s "http://$ip/json/state"
@@ -96,27 +146,25 @@ status() {
 # Helper functions for input
 brightness_help() {
   echo "brightness requires a 3rd argument specifying the brightness between 0 and 255"
-} 
+}
 
 color_help() {
   echo "set_color requires a 3rd argument specifying the color in RGB hexadecimal format (e.g., FF00FF)"
 }
-  
+
 fx_help() {
   echo "set_effect requires a 3rd argument specifying the effect number"
 }
-    
+
 # Process commands
 case "$2" in
-    on) on;;
-    off) off;;
+    on) on $3;;
+    off) off $3;;
     get_brightness) get_brightness;;
-    set_brightness) set_brightness $3;;
-    set_color) set_color $3;;
+    set_brightness) set_brightness $3 $4;;
+    set_color) set_color $3 $4;;
     cycle) cycle $3 $4 &;;
-    set_effect) set_effect $3;;
+    set_effect) set_effect $3 $4;;
     status) status;;
     *) echo "Invalid command"; usage;;
-esac   
-  
-  
+esac
