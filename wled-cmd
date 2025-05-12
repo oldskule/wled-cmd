@@ -1,6 +1,6 @@
 #!/bin/bash
 usage() {
-  echo "Usage: $0 ipaddress {on|off|get_brightness|set_brightness|set_color|cycle|set_effect|status} [segment_ids]"
+  echo "Usage: $0 ipaddress {on|off|set_brightness|set_color|cycle|set_effect|status} [segment_ids]"
 }
 
 # Validate IP address
@@ -240,6 +240,13 @@ status() {
   echo
 }
 
+reset() {
+  echo "Resetting all segments to brightness 150..."
+  off
+  sleep 0.2
+  on
+}
+
 # Helper functions for input
 brightness_help() {
   echo "brightness requires a 3rd argument specifying the brightness between 0 and 255"
@@ -257,6 +264,7 @@ fx_help() {
 case "$2" in
     on) on $3;;
     off) off $3;;
+    reset) reset;;
     get_brightness) get_brightness;;
     set_brightness) set_brightness $3 $4;;
 		lighten) lighten "$3" "$4" ;;
@@ -265,5 +273,6 @@ case "$2" in
     cycle) cycle $3 $4 &;;
     set_effect) set_effect $3 $4;;
     status) status;;
+    
     *) echo "Invalid command"; usage;;
 esac
