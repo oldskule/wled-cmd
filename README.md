@@ -6,6 +6,20 @@ Built for power users and automation scripts that want precise, programmable con
 
 ---
 
+# Changelog – wled-cmd
+
+## v2.0 – Major Enhancements & Segment Brightness Control (2025-05-12)
+
+### 🚀 New Features
+
+- **Segment brightness scaling (`lighten` / `darken`)**  
+  Added two new commands to scale brightness up or down by a given percentage:
+  ```bash
+  ./wled-cmd <ip> lighten 20%          # Decrease brightness of all segments by 20%
+  ./wled-cmd <ip> darken 30% 0,1,2     # Increase brightness of segments 0,1,2 by 30%
+
+---
+
 ## ✨ Features
 
 - Control WLED using simple bash commands
