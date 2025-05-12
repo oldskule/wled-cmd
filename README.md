@@ -17,6 +17,30 @@ Built for power users and automation scripts that want precise, programmable con
   ```bash
   ./wled-cmd <ip> lighten 20%          # Decrease brightness of all segments by 20%
   ./wled-cmd <ip> darken 30% 0,1,2     # Increase brightness of segments 0,1,2 by 30%
+  ```
+	•	Soft Off using Brightness
+  • Replaced "on": false with "bri": 1 when turning segments off, ensuring segments stay logically on (especially for PWM setups).
+	•	Preset Brightness on on Command
+  • The on command now sets segments to a brightness level of 150 by default.
+
+---
+
+## ✅ Improvements
+- Robust fallback for segment brightness detection  
+  If seg[].bri is unavailable, falls back to root .bri or uses 150 as a last resort.    
+- Color Validation  
+  Added a regex check to ensure set_color receives a valid 6-digit hex string ([0-9A-Fa-f]{6}).  
+- Brightness Validation  
+  set_brightness now checks that brightness is an integer between 0 and 255.  
+- Percent Format Cleanup  
+  Handles both 10 and 10% inputs in lighten/darken.  
+
+---
+
+## 🧹 Cleanups
+- Standardized JSON payload construction for all segment-based operations
+- Ensured all payload strings are properly quoted to avoid malformed requests
+- Added support for segment iteration from 0–7 when no segment list is provided
 
 ---
 
