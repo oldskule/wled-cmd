@@ -65,7 +65,8 @@ Only two external dependencies are used:
 
 ### Install:
 
-sudo apt-get install libxml2-utils
+Fedora: dnf install libxml2  
+Ubuntu: sudo apt-get install libxml2-utils  
 
 ### Usage
 ```
@@ -82,7 +83,7 @@ sudo apt-get install libxml2-utils
 ```
 ./wled-cmd <ip-address> on 2,3,4             # Turn on segments 2, 3, and 4
 ./wled-cmd <ip-address> off 0,1,5            # Dim segments 0, 1, and 5 to "off"
-./wled-cmd <ip-address> set_effect 10 1,2,3,4,5
+./wled-cmd <ip-address> set_effect 10 1,2,3  # Set effect 10 on segment 1, 2  3  
 ```
 
 
