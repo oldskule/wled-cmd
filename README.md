@@ -18,10 +18,11 @@ Built for power users and automation scripts that want precise, programmable con
   ./wled-cmd <ip> lighten 20%          # Decrease brightness of all segments by 20%
   ./wled-cmd <ip> darken 30% 0,1,2     # Increase brightness of segments 0,1,2 by 30%
   ```
-	•	Soft Off using Brightness
-  • Replaced "on": false with "bri": 1 when turning segments off, ensuring segments stay logically on (especially for PWM setups).
-	•	Preset Brightness on on Command
-  • The on command now sets segments to a brightness level of 150 by default.
+  
+- Soft Off using Brightness
+- Replaced "on": false with "bri": 1 when turning segments off, ensuring segments stay logically on (especially for PWM setups).
+- Preset Brightness into on Command
+- The on command now sets segments to a brightness level of 150 by default.
 
 ---
 
@@ -68,24 +69,24 @@ sudo apt-get install libxml2-utils
 
 ### Usage
 ```
-./wled-cmd <ip-address> on  
-./wled-cmd <ip-address> off  
-./wled-cmd <ip-address> status  
-./wled-cmd <ip-address> brightness 128  
-./wled-cmd <ip-address> set_effect 68  
-./wled-cmd <ip-address> cycle
+./wled-cmd <ip-address> on                    # Sets all to level 150
+./wled-cmd <ip-address> off  		      # Dims lights to least value
+./wled-cmd <ip-address> status                # Get Status of LEDs
+./wled-cmd <ip-address> brightness 128        # Adjusts Master Brightness Level
+./wled-cmd <ip-address> set_effect 68         # Set Effects
+./wled-cmd <ip-address> cycle		      # Cycle Effects
 ```
 
 ### Segment Control
 
 ```
-./wled-cmd <ip-address> on 2,3,4      # Turn on segments 2, 3, and 4
-./wled-cmd <ip-address> off 0,1,5     # Dim segments 0, 1, and 5 to "off"
+./wled-cmd <ip-address> on 2,3,4             # Turn on segments 2, 3, and 4
+./wled-cmd <ip-address> off 0,1,5            # Dim segments 0, 1, and 5 to "off"
 ./wled-cmd <ip-address> set_effect 10 1,2,3,4,5
 ```
 
 
-### Brightness Tuning by Percentage
+### Brightness Tuning of Individual Segments by Percentage
 ```
 ./wled-cmd <ip-address> lighten 2,3,4 20%  # Decrease brightness of segments 2,3,4 by 20%
 ./wled-cmd <ip-address> lighten 20%        # Decrease all segments by 20%
