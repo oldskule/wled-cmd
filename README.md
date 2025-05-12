@@ -1,56 +1,22 @@
 # wled-cmd
+Simple command line interface for WLED devices
 
-A simple, segment-aware command-line interface (CLI) for controlling [WLED](https://github.com/Aircoookie/WLED) devices via the JSON API.
+# requirements
+There are only 2 tools called by this script:
+curl
+xmllint
+- Fedora: dnf install libxml2
+- Ubuntu: apt-get install libxml2-utils
 
-Built for power users and automation scripts that want precise, programmable control of multi-segment WLED setups — including brightness tuning, effect changes, segment toggling, and proportional dimming/brightening.
-
----
-
-## ✨ Features
-
-- Control WLED using simple bash commands
-- Full segment ID support (e.g. turn on/off specific lights)
-- Adjust brightness up or down by percentage
-- Cycle through effects (or set specific ones)
-- Clean JSON-based API usage
-- Graceful fallback support for systems without Bash ≥ 4.0
-
----
-
-## 🛠 Requirements
-
-Only two external dependencies are used:
-
-- `curl` — for HTTP requests
-- `xmllint` — for basic XML validation (rarely needed unless you extend the script)
-
-### Install:
-
-sudo apt-get install libxml2-utils
-
-### Usage
+# usage
 ```
-./wled-cmd <ip-address> on  
-./wled-cmd <ip-address> off  
-./wled-cmd <ip-address> status  
-./wled-cmd <ip-address> brightness 128  
-./wled-cmd <ip-address> set_effect 68  
-./wled-cmd <ip-address> cycle
-```
-
-### Segment Control
-
-```
-./wled-cmd <ip-address> on 2,3,4      # Turn on segments 2, 3, and 4
-./wled-cmd <ip-address> off 0,1,5     # Dim segments 0, 1, and 5 to "off"
-./wled-cmd <ip-address> set_effect 10 1,2,3,4,5
+./wled-cmd 192.168.1.147 on
+./wled-cmd 192.168.1.147 brightness 128
+./wled-cmd 192.168.1.147 cycle (this one cycles through a list of effects in the script)
+./wled-cmd 192.168.1.147 fx 68
+./wled-cmd 192.168.1.147 status
+./wled-cmd 192.168.1.147 off
 ```
 
 
-### Brightness Tuning by Percentage
-```
-./wled-cmd <ip-address> lighten 2,3,4 20%  # Decrease brightness of segments 2,3,4 by 20%
-./wled-cmd <ip-address> lighten 20%        # Decrease all segments by 20%
-./wled-cmd <ip-address> darken 0,1,5 30%   # Increase brightness of segments 0,1,5 by 30%
-./wled-cmd <ip-address> darken 10%         # Increase all segments by 10%
-```
+
