@@ -26,34 +26,51 @@ http_code() {
 # Turn WLED on
 on() {
   local segment_ids=$1
+  local brightness=150
+  JSON_PAYLOAD='{"on": true, "seg":['
+
   if [[ $segment_ids ]]; then
     IFS=',' read -ra ids <<< "$segment_ids"
-    JSON_PAYLOAD='{"seg":['
     for id in "${ids[@]}"; do
-      JSON_PAYLOAD+="{\"id\":$id,\"on\":true},"
+      JSON_PAYLOAD+="{\"id\":$id,\"on\":true,\"bri\":$brightness},"
     done
-    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
   else
-    JSON_PAYLOAD='{"on": true}'
+    for i in {0..7}; do
+      JSON_PAYLOAD+="{\"id\":$i,\"on\":true,\"bri\":$brightness},"
+    done
   fi
-  return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
+
+  JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+
+  return=$(curl -s -o /dev/null -w "%{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" "http://$ip/json/state")
+
   http_code $return
 }
 
-# Turn WLED off
+# Turn WLED "off" by dimming all 8 segments to brightness 1
 off() {
   local segment_ids=$1
+  JSON_PAYLOAD='{"on": true, "seg":['
+
   if [[ $segment_ids ]]; then
     IFS=',' read -ra ids <<< "$segment_ids"
-    JSON_PAYLOAD='{"seg":['
     for id in "${ids[@]}"; do
-      JSON_PAYLOAD+="{\"id\":$id,\"on\":false},"
+      JSON_PAYLOAD+="{\"id\":$id,\"bri\":1},"
     done
-    JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
   else
-    JSON_PAYLOAD='{"on": false}'
+    for i in {0..7}; do
+      JSON_PAYLOAD+="{\"id\":$i,\"bri\":1},"
+    done
   fi
-  return=$(curl -s -o /dev/null -w "%{http_code}\n" -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "http://$ip/json/state")
+
+  JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+
+  return=$(curl -s -o /dev/null -w "%{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" "http://$ip/json/state")
+
   http_code $return
 }
 
@@ -70,6 +87,10 @@ set_brightness() {
     brightness_help
     exit 1
   fi
+  if ! [[ "$brightness" =~ ^[0-9]+$ ]] || ((brightness < 0 || brightness > 255)); then
+	  brightness_help
+	  exit 1
+	fi
   if [[ $segment_ids ]]; then
     IFS=',' read -ra ids <<< "$segment_ids"
     JSON_PAYLOAD='{"seg":['
@@ -84,6 +105,78 @@ set_brightness() {
   http_code $return
 }
 
+adjust_brightness() {
+  local mode=$1       # lighten or darken
+  local percent=$2    # e.g. 20%
+  local ids_string=$3 # optional: "1,2,3"
+
+	# Remove all % characters from input
+  percent=${percent//\%/}
+
+  # Validate percent is numeric
+  if ! [[ "$percent" =~ ^[0-9]+$ ]]; then
+    echo "Invalid percentage: $percent"
+    exit 1
+  fi
+
+  # Fetch current state
+  local state=$(curl -s "http://$ip/json/state")
+  local seg_count=$(echo "$state" | jq '.seg | length')
+
+  # Determine segment IDs
+  if [[ -z "$ids_string" ]]; then
+    ids=()
+    for ((i = 0; i < seg_count; i++)); do ids+=($i); done
+  else
+    IFS=',' read -ra ids <<< "$ids_string"
+  fi
+  
+  # Construct payload
+  JSON_PAYLOAD='{"on": true, "seg":['
+
+  for id in "${ids[@]}"; do
+    current_bri=$(echo "$state" | jq -r ".seg[$id].bri")
+
+		# Fallback if .bri is null, empty, or non-numeric
+		if [[ -z "$current_bri" || "$current_bri" == "null" || ! "$current_bri" =~ ^[0-9]+$ ]]; then
+				current_bri=$(echo "$state" | jq -r '.bri')
+		fi
+		
+		# Still invalid? Force to 150
+		if [[ -z "$current_bri" || "$current_bri" == "null" || ! "$current_bri" =~ ^[0-9]+$ ]]; then
+				current_bri=150
+		fi
+
+    if [[ "$mode" == "lighten" ]]; then
+      new_bri=$(echo "$current_bri - ($current_bri * $percent / 100)" | bc)
+    else
+      new_bri=$(echo "$current_bri + ($current_bri * $percent / 100)" | bc)
+    fi
+
+    new_bri=$(printf "%.0f" "$new_bri") # round
+    [[ $new_bri -gt 255 ]] && new_bri=255
+    [[ $new_bri -lt 1 ]] && new_bri=1
+
+    JSON_PAYLOAD+="{\"id\":$id,\"bri\":$new_bri},"
+  done
+
+  JSON_PAYLOAD=${JSON_PAYLOAD%,}']}'
+
+  return=$(curl -s -o /dev/null -w "%{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" "http://$ip/json/state")
+
+  http_code $return
+}
+
+lighten() {
+  adjust_brightness "lighten" "$1" "$2"
+}
+
+darken() {
+  adjust_brightness "darken" "$1" "$2"
+}
+
 # Set color
 set_color() {
   local color=$1
@@ -92,6 +185,10 @@ set_color() {
     color_help
     exit 1
   fi
+  if [[ ! "$color" =~ ^[0-9A-Fa-f]{6}$ ]]; then
+  	echo "Invalid color format. Use 6-digit hex like FF00FF."
+  	exit 1
+	fi
   # Convert hex color to decimal RGB values
   r=$(printf '%d' "0x${color:0:2}")
   g=$(printf '%d' "0x${color:2:2}")
@@ -162,6 +259,8 @@ case "$2" in
     off) off $3;;
     get_brightness) get_brightness;;
     set_brightness) set_brightness $3 $4;;
+		lighten) lighten "$3" "$4" ;;
+		darken) darken "$3" "$4" ;;
     set_color) set_color $3 $4;;
     cycle) cycle $3 $4 &;;
     set_effect) set_effect $3 $4;;
